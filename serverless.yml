@@ -12,6 +12,8 @@
 # Happy Coding!
 
 service: upload-service # NOTE: update this with your service name
+app: forten-media-upload-service
+tenant: dviramontes
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
