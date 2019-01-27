@@ -1,12 +1,5 @@
-# Serverless directories
-.serverless
-
-# golang output binary directory
-bin
-
-# golang vendor (dependencies) directory
-vendor
-
+# Created by .ignore support plugin (hsz.mobi)
+### Go template
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -21,3 +14,9 @@ vendor
 *.out
 
 .env
+
+# golang output binary directory
+upload/upload
+
+# golang vendor (dependencies) directory
+vendor

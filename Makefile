@@ -1,14 +1,10 @@
-.PHONY: build clean deploy
-
-build:
-	dep ensure -v
-	env GOOS=linux go build -ldflags="-s -w" -o bin/upload upload/main.go
-
-clean:
-	rm -rf ./bin ./vendor Gopkg.lock
-
-deploy: clean build
-	serverless deploy --verbose
+.PHONY: dep clean build
 
 dep:
 	dep ensure -v
+
+clean: 
+	rm -rf upload/upload ./vendor Gopkg.lock
+	
+build: dep
+	GOOS=linux GOARCH=amd64 go build -o upload/upload ./upload

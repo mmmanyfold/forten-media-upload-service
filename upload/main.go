@@ -1,45 +1,51 @@
 package main
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// Response is of type APIGatewayProxyResponse since we're leveraging the
-// AWS Lambda Proxy Request functionality (default behavior)
-//
-// https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
-type Response events.APIGatewayProxyResponse
+var (
+	// DefaultHTTPGetAddress Default Address
+	DefaultHTTPGetAddress = "https://checkip.amazonaws.com"
 
-// Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(ctx context.Context) (Response, error) {
-	var buf bytes.Buffer
+	// ErrNoIP No IP found in response
+	ErrNoIP = errors.New("No IP in HTTP response")
 
-	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!",
-	})
+	// ErrNon200Response non 200 status code in response
+	ErrNon200Response = errors.New("Non 200 Response found")
+)
+
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	resp, err := http.Get(DefaultHTTPGetAddress)
 	if err != nil {
-		return Response{StatusCode: 404}, err
-	}
-	json.HTMLEscape(&buf, body)
-
-	resp := Response{
-		StatusCode:      200,
-		IsBase64Encoded: false,
-		Body:            buf.String(),
-		Headers: map[string]string{
-			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "upload-handler",
-		},
+		return events.APIGatewayProxyResponse{}, err
 	}
 
-	return resp, nil
+	if resp.StatusCode != 200 {
+		return events.APIGatewayProxyResponse{}, ErrNon200Response
+	}
+
+	ip, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return events.APIGatewayProxyResponse{}, err
+	}
+
+	if len(ip) == 0 {
+		return events.APIGatewayProxyResponse{}, ErrNoIP
+	}
+
+	return events.APIGatewayProxyResponse{
+		Body:       fmt.Sprintf("Hello, %v", string(ip)),
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }
